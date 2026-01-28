@@ -95,8 +95,11 @@ func _process(_delta: float) -> void:
 # SCENE RANDOMIZATION
 # -----------------------------
 func _randomize_scene() -> void:
-	# Randomize object poses
+	# Randomize object poses (skip Ground if present by name)
 	for m in _meshes:
+		if m.name == "Ground":
+			continue
+
 		var x = _rng.randf_range(-spawn_radius, spawn_radius)
 		var z = _rng.randf_range(-spawn_radius, spawn_radius)
 		m.position = Vector3(x, object_y, z)
@@ -130,6 +133,9 @@ func _save_viewport_png(path: String) -> void:
 func _save_metadata_json(meta_path: String, rgb_path: String, mask_path: String) -> void:
 	var objects := []
 	for m in _meshes:
+		if m.name == "Ground":
+			continue
+
 		objects.append({
 			"name": m.name,
 			"position": [m.position.x, m.position.y, m.position.z],
@@ -178,13 +184,21 @@ func _assign_mask_colors() -> void:
 		Color(0, 1, 1)     # cyan
 	]
 
-	for i in range(_meshes.size()):
-		_mask_colors[_meshes[i]] = palette[i % palette.size()]
+	# Only assign colors to non-ground meshes
+	var idx := 0
+	for m in _meshes:
+		if m.name == "Ground":
+			continue
+		_mask_colors[m] = palette[idx % palette.size()]
+		idx += 1
 
 func _apply_segmentation_materials() -> void:
 	_original_materials.clear()
 
 	for m in _meshes:
+		if m.name == "Ground":
+			continue
+
 		_original_materials[m] = m.material_override
 
 		var mat := StandardMaterial3D.new()
